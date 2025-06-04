@@ -165,7 +165,7 @@ for i, sentiment in enumerate(["negative", "neutral", "positive"]):
         st.subheader(f"Messages {sentiment.capitalize()}")
 
         # Filtrer les messages par sentiment
-        filtered = df[df["sentiment"] == sentiment]
+        filtered = df_filtered[df_filtered["sentiment"] == sentiment]
 
         # Choix de tri local à chaque sentiment
         sort_option = st.selectbox(
@@ -180,7 +180,7 @@ for i, sentiment in enumerate(["negative", "neutral", "positive"]):
             filtered = filtered.sort_values(by="sentiment_score", ascending=False)
 
         # Limiter à 20 messages
-        filtered = filtered.head(20)
+        filtered = filtered.head(30)
 
         # Affichage des messages triés
         for _, row in filtered.iterrows():
