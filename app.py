@@ -1,49 +1,15 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-
-# import psycopg2
-# import os
 from datetime import datetime, timedelta
 
 # ---- CONFIGURATION ----
 st.set_page_config(page_title="Sentiment StockTwits", layout="wide")
 
-
-# ---- CONNEXION DATABASE ----
-# @st.cache_resource
-# def get_connection():
-#     conn = psycopg2.connect(
-#         dbname=os.getenv("POSTGRES_DB", "abq_db"),
-#         user=os.getenv("POSTGRES_USER", "abq_user"),
-#         password=os.getenv("POSTGRES_PASSWORD", "abq_pass"),
-#         host=os.getenv("POSTGRES_HOST", "localhost"),
-#         port=5432,  # utilisé dans le container
-#     )
-#     return conn
-
-
-# conn = get_connection()
-
-
-# ---- RÉCUPÉRATION DES SYMBOLS DISPONIBLES ----
-# @st.cache_data
-# def get_available_symbols():
-#     with conn.cursor() as cur:
-#         cur.execute("SELECT DISTINCT symbol FROM stocktwits_messages ORDER BY symbol;")
-#         rows = cur.fetchall()
-#     return [row[0] for row in rows]
-
-
-# symbols = get_available_symbols()
 symbols = ["AAPL", "GOOGL", "AMZN", "MSFT", "STLA", "BTC"]
 
 # ---- UI ----
 st.title("📈 Dashboard de sentiment StockTwits")
-# selected_symbol = st.selectbox("Choisir un symbole :", symbols)
-
-# df_demo = pd.read_csv("export_symboles.csv")
-# df = df_demo[df_demo["symbol"] == selected_symbol]
 
 
 # Charger les données CSV
@@ -62,45 +28,6 @@ selected_symbole = st.selectbox("Choisissez un symbole", symboles)
 # Filtrer et forcer une copie propre
 df_filtered = df[df["symbol"] == selected_symbole].copy()
 
-
-def get_neutral_color():
-    # Détection du thème actif
-    theme = st.get_option("theme.base")  # 'light' ou 'dark'
-    # Couleurs personnalisées
-    if theme == "dark":
-        neutral_color = "#262730"  # gris foncé pour fond sombre
-    else:
-        neutral_color = "#F0F2F6"  # gris clair pour fond clair
-
-    print(neutral_color)
-    return neutral_color
-
-
-# ---- RÉCUPÉRATION DES DONNÉES ----
-# @st.cache_data
-# def load_data(symbol):
-#     query = """
-#     SELECT sentiment, sentiment_score, username, body, created_at
-#     FROM stocktwits_messages
-#     WHERE symbol = %s
-#     """
-#     df = pd.read_sql_query(query, conn, params=(symbol,))
-#     return df
-
-
-# Pour extraire des données vers un csv
-# def load_data(symbol):
-#     query = """
-#     SELECT sentiment, sentiment_score, username, body, created_at
-#     FROM stocktwits_messages
-#     WHERE symbol = 'AAPL' OR symbol = 'GOOGL' OR symbol = 'AMZN' OR symbol = 'MSFT' OR symbol = 'STLA' OR symbol = 'BTC'
-#     """
-#     df = pd.read_sql_query(query, conn, params=(symbol,))
-#     return df
-
-
-# df = load_data(selected_symbol)
-# df.to_csv("export_symboles.csv", index=False)
 
 # ---- AGRÉGATION POUR GRAPHIQUE ----
 sentiment_counts = (
@@ -134,7 +61,6 @@ period_map = {
 period = period_map[period_label]
 
 # --- Filtrage par symbole ---
-# df_filtered = df[df["symbol"] == selected_symbole].copy()
 # Convertir created_at en datetime
 df_filtered["created_at"] = pd.to_datetime(df_filtered["created_at"], errors="coerce")
 
@@ -143,17 +69,6 @@ cutoff_date = datetime.now() - timedelta(days=period)
 
 # Filtrage final
 df_filtered = df_filtered[df_filtered["created_at"] >= cutoff_date]
-# Calcul des bornes temporelles
-# cutoff_date = pd.Timestamp.now() - pd.Timedelta(days=period)
-
-# # Convertir la colonne 'created_at' en datetime
-# df["created_at"] = pd.to_datetime(df["created_at"], errors="coerce")
-
-# # Définir une date de coupure (par exemple 7 jours en arrière)
-# cutoff_date = datetime.now() - timedelta(days=7)
-
-# # Filtrage
-# df_filtered = df[df["created_at"] >= cutoff_date]
 
 # Agrégation
 df_filtered["date"] = df_filtered["created_at"].dt.date
@@ -263,6 +178,9 @@ for i, sentiment in enumerate(["negative", "neutral", "positive"]):
             filtered = filtered.sort_values(by="created_at", ascending=False)
         else:
             filtered = filtered.sort_values(by="sentiment_score", ascending=False)
+
+        # Limiter à 20 messages
+        filtered = filtered.head(20)
 
         # Affichage des messages triés
         for _, row in filtered.iterrows():
