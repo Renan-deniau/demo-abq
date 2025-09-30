@@ -320,7 +320,13 @@ with left:
     period = period_map[period_label]
 
     # Calcul des bornes temporelles
-    cutoff_date = pd.Timestamp.now() - pd.Timedelta(days=period)
+    realTime = False
+    
+    if realTime:
+        cutoff_date = pd.Timestamp.now() - pd.Timedelta(days=period)
+    else:
+        max_date = df["created_at"].max()
+        cutoff_date = max_date - pd.Timedelta(days=period)
 
     # Filtrage
 
